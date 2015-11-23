@@ -26,9 +26,7 @@
 %    WAVELET_2D, MORLET_FILTER_BANK_2D, SHANNON_FILTER_BANK_2D
 
 function [Wop, filters] = wavelet_factory_2d(size_in, filt_opt, scat_opt)
-    % Options
-    % check options white list
-    
+    %% Check options white list
     if(nargin<3)
         scat_opt=struct;
     end
@@ -43,11 +41,10 @@ function [Wop, filters] = wavelet_factory_2d(size_in, filt_opt, scat_opt)
     
     check_options_white_list(filt_opt, white_list_filt);
     check_options_white_list(scat_opt, white_list_scat);
-    
-    scat_opt = fill_struct(scat_opt, 'M', 2);
 	
-	% Create filters
+	%% Create filters
     filt_opt = fill_struct(filt_opt, 'filter_type', 'morlet');
+    
     switch filt_opt.filter_type
         case 'morlet'
             filt_opt = rmfield(filt_opt, 'filter_type');
@@ -59,11 +56,14 @@ function [Wop, filters] = wavelet_factory_2d(size_in, filt_opt, scat_opt)
             error('unsupported filter type');
     end
 	
-	% Create the wavelet transform to apply at the m-th layer
-	for m = 1:scat_opt.M+1
-        
-        options_W = rmfield(scat_opt, 'M');
-        
+    %% Number of layers
+    scat_opt = fill_struct(scat_opt, 'M', 2); % if i does not exist
+    options_W = rmfield(scat_opt, 'M');
+    M = scat_opt.M;
+	
+    %% Create the wavelet transform to apply at the m-th layer
+    Wop = cell( 1 , M + 1 );
+	for m = 1:M + 1        
 		Wop{m} = @(x)(wavelet_layer_2d(x, filters, options_W));
 	end
 end

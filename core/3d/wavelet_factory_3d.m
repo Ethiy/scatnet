@@ -27,10 +27,9 @@
 %   SCAT, WAVELET_2D, WAVELET_LAYER_2D, WAVELET_3D, WAVELET_3D_LAYER
 
 
-function [ Wop, filters, filters_rot ] = ...
-		wavelet_factory_3d(size_in, filt_opt, filt_rot_opt, scat_opt)
+function [ Wop, filters, filters_rot ] = wavelet_factory_3d(size_in, filt_opt, filt_rot_opt, scat_opt)
 	
-    % initialize the non-provided options with empty structure
+    %% Check options white list
     if (nargin < 4)
         scat_opt = struct();
     end
@@ -41,27 +40,29 @@ function [ Wop, filters, filters_rot ] = ...
         filt_opt = struct();
     end
 	
-	% filters along spatial variable
+	%% Filters along spatial variable
 	filters = morlet_filter_bank_2d(size_in, filt_opt);
 	
-	% filters along angular variable
-	sz = filters.meta.L * 2; % L orientations between 0 and pi
-	% periodic convolutions along angles
-	filt_rot_opt.boundary = 'per';
+	%% Filters along angular variable
+	angular_length = filters.meta.L * 2; % L orientations between 0 and pi
+	filt_rot_opt.boundary = 'per'; % periodic convolutions along angles
 	filt_rot_opt.filter_format = 'fourier_multires';
 	filt_rot_opt.J = 3;
 	filt_rot_opt.P = 0;
-	filters_rot = morlet_filter_bank_1d(sz, filt_rot_opt);
+	filters_rot = morlet_filter_bank_1d( angular_length , filt_rot_opt );
 	
-	% number of layer
+	%% Number of layers
 	scat_opt = fill_struct(scat_opt, 'M', 2);
     wav_opt = rmfield(scat_opt, 'M');
+    M = scat_opt.M;
 	
-	% first wavelet transform is an usual wavelet transform
+    Wop = cell( 1 , M + 1 );
+    
+	%% First wavelet transform is a usual wavelet transform
 	Wop{1} = @(x)(wavelet_layer_2d(x, filters, wav_opt));
 	
-	% other wavelet transform are roto-translation wavelet
-	for m = 2:scat_opt.M+1
+	%% The rest of roto-translation wavelet transforms
+	for m = 2:M+1
 		Wop{m} = @(x)(wavelet_layer_3d(x, filters, filters_rot, wav_opt));
 	end
 end

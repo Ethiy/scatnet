@@ -39,15 +39,20 @@
 %   WAVELET_FACTORY_1D, WAVELET_FACTORY_2D, WAVELET_FACTORY_2D_PYRAMID
 
 function [S, U] = scat(x, Wop)
-	% Initialize signal and meta
+	
+    P = numel( Wop ); %P == M+1
+    S = cell( 1 , P );
+    U = cell( 1 , P );
+    
+    %% Initialize signal and meta
 	U{1}.signal{1} = x;
 	U{1}.meta.j = zeros(0,1);
 	U{1}.meta.q = zeros(0,1);
     U{1}.meta.resolution=0;
-
-	% Apply scattering, order per order
-	for m = 0:numel(Wop)-1
-		if (m < numel(Wop)-1)
+    
+	%% Apply scattering, order per order
+	for m = 0:P-1
+		if (m < P-1)
 			[S{m+1}, V] = Wop{m+1}(U{m+1});
 			U{m+2} = modulus_layer(V);
 		else

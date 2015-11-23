@@ -37,20 +37,24 @@
 %    WAVELET_LAYER_1D, WAVELET_1D, FILTER_BANK
 
 function [Wop, filters] = wavelet_factory_1d(N, filt_opt, scat_opt)
-	if nargin < 2
-		filters = filter_bank(N);
+    %% Check options white list
+    if nargin < 2
+        filters = filter_bank( N );
     else
-        filters = filter_bank(N, filt_opt);
+        filters = filter_bank( N , filt_opt );
     end
-	
-	if nargin < 3
-		scat_opt = struct(); 
+
+    if nargin < 3
+        scat_opt = struct(); 
     end
-    scat_opt = fill_struct(scat_opt, 'M', 2); % M is the scattering order
-	
-    Wop = cell(1,scat_opt.M);
-	for m = 0:scat_opt.M
-		filt_ind = min(numel(filters), 1+m);
-		Wop{1+m} = @(X)(wavelet_layer_1d(X, filters{filt_ind}, scat_opt));
-	end
+    %% Number of layers
+    scat_opt = fill_struct( scat_opt, 'M', 2); 
+    M = scat_opt.M;
+
+    %% Create the wavelet transform to apply at the m-th layer
+    Wop = cell(1, M );
+    for m = 0:M
+        filt_ind = min(numel(filters), 1+m);
+        Wop{1+m} = @(X)(wavelet_layer_1d(X, filters{filt_ind}, scat_opt));
+    end
 end

@@ -24,11 +24,12 @@
 %   WAVELET_3D, WAVELET_FACTORY_3D
 
 function [U_Phi, U_Psi] = wavelet_layer_3d(U, filters, filters_rot, options)
-	
+	%% Number of outputs
     % do not compute any convolution
     % with psi if the user does get U_psi
 	calculate_psi = (nargout>=2); 
 	
+    %% Rotation orbits
 	% if previous layers contains 2d signal, we must first
 	% extract the rotation orbits
 	previous_layer_2d = numel(size(U.signal{1})) == 2;
@@ -37,7 +38,7 @@ function [U_Phi, U_Psi] = wavelet_layer_3d(U, filters, filters_rot, options)
 		p_orb = 1;
 		for j = 0:max(U.meta.j)
 			orbit = U.meta.j == j;
-			y = {U.signal{orbit}};
+			y = { U.signal{orbit} };
 			y = reshape(cell2mat(y),[size(y{1},1),size(y{1},2),numel(y)]);
 			Uorb.signal{p_orb} = y;
 			Uorb.meta.j(p_orb) = j;
@@ -60,7 +61,7 @@ function [U_Phi, U_Psi] = wavelet_layer_3d(U, filters, filters_rot, options)
 		options.x_resolution = U.meta.resolution(p);
 		if (calculate_psi)
 			% compute wavelet transform
-			[y_Phi, y_Psi, meta_Phi, meta_Psi] = wavelet_3d(y, filters, filters_rot, options);
+			[y_Phi, y_Psi, ~ , meta_Psi] = wavelet_3d(y, filters, filters_rot, options);
 		else
 			y_Phi = wavelet_3d(y, filters, filters_rot, options);
 		end

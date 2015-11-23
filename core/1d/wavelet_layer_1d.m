@@ -36,19 +36,23 @@
 %   WAVELET_1D, WAVELET_FACTORY_1D, WAVELET_LAYER_2D
 
 function [U_phi, U_psi] = wavelet_layer_1d(U, filters, scat_opt, wavelet)
-	if nargin < 3
-		scat_opt = struct();
-	end
+	%% Options
+    if nargin < 3
+        scat_opt = struct();
+    end
 	
 	if nargin < 4
 		wavelet = @wavelet_1d;
 	end
 	
 	scat_opt = fill_struct(scat_opt, 'path_margin', 0);
-	
+    
+	%% Number of outputs
+    % do not compute any convolution
+    % with psi if the user does get U_psi
 	calc_U = (nargout>=2);
 
-	[psi_xi,psi_bw,phi_bw] = filter_freq(filters.meta);
+	[ psi_xi , ~ , ~ ] = filter_freq( filters.meta );
 	
 	if ~isfield(U.meta, 'bandwidth'), U.meta.bandwidth = 2*pi; end
 	if ~isfield(U.meta, 'resolution'), U.meta.resolution = 0; end

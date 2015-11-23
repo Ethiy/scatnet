@@ -56,16 +56,17 @@ function [x_phi, x_psi, meta_phi, meta_psi] = wavelet_2d(x, filters, options)
     meta_phi.resolution = options.x_resolution + ds;
     
     % Band-pass filtering, downsampling and unpadding
-    x_psi={};
+    indices = find(psi_mask);
+    x_psi = cell( 1 , length(indices) ) ;
     meta_psi = struct();
-    for p = find(psi_mask)
+    for p = indices
         j = filters.psi.meta.j(p);
         ds = max(floor(j/Q)- options.x_resolution - oversampling, 0);
         x_psi{p} = conv_sub_2d(xf, filters.psi.filter{p}, ds);
         x_psi{p} = unpad_signal(x_psi{p}, ds*[1 1], size(x));
         meta_psi.j(1,p) = filters.psi.meta.j(p);
         meta_psi.theta(1,p) = filters.psi.meta.theta(p);
-        meta_psi.resolution(1,p) = options.x_resolution+ds;
+        meta_psi.resolution(1,p) = options.x_resolution + ds;
     end
     
 end
