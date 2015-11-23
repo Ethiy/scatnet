@@ -100,7 +100,6 @@ function filters = morlet_filter_bank_1d(sig_length,options)
 	
 	% The normalization factor for the wavelets, calculated using the filters
 	% at the finest resolution (N)
-	psi_ampl = 1;
 	
 	if (strcmp(options.boundary, 'symm'))
 		N = 2*sig_length;
