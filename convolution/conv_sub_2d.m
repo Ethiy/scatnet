@@ -43,9 +43,9 @@ function y_ds = conv_sub_2d(in, filter, ds, offset)
 				   error('offset is not a valid parameter for filters of type fourier_multires');
 				end
 				% compute the resolution of the input signal
-				res = floor(log2(size(filter.coefft{1},1)/size(in,1)));
+				resolution = floor(log2(size(filter.coefft{1},1)/size(in,1)));
 				% retrieves the coefficients of the filter for the resolution
-				coefft = filter.coefft{res+1};
+				coefft = filter.coefft{resolution+1};
 				% periodization followed by inverse Fourier transform is 
 				% equivalent to inverse Fourier transform followed by
 				% downsampling but is faster because the inverse Fourier

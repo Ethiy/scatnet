@@ -1,11 +1,11 @@
 % PAD_SIGNAL Pad a signal
 %
 % Usage
-%    y = PAD_SIGNAL(x, Npad, boundary, center)
+%    y = PAD_SIGNAL(x, size_paded, boundary, center)
 %
 % Input
 %    x (numeric): The signal to be padded.
-%    Npad (numeric): The desired size of the padded output.
+%    size_paded (numeric): The desired size of the padded output.
 %    boundary (string): The boundary condition of the signal, one of:
 %        'symm': Symmetric boundary condition with half-sample symmetry, for
 %             example [1 2 3 4]' -> [1 2 3 4 4 3 2 1]' for Npad = 8
@@ -37,29 +37,29 @@
 % See Also
 %    UNPAD_SIGNAL
 
-function y = pad_signal(x, Npad, boundary, center)
+function y = pad_signal( x, size_paded, boundary, center)
 	if nargin < 3 || isempty(boundary)
 		boundary = 'symm';
 	end
 
-	if nargin < 4
-		center = 0;
+    if nargin < 4
+        center = 0;
     end
     
-    orig_sz = size(x);
-    orig_sz = orig_sz(1:length(Npad));
-
-	if any(orig_sz > Npad)
+    original_size = size(x);
+    original_size = original_size( 1:length(size_paded) ); % take the right dimensions
+    
+	if any(original_size' > size_paded)
 		error('Original size must be smaller than padding size');
 	end
 
-	if center
-		margins = floor((Npad - orig_sz)/2);
+    if center
+        margins = floor((size_paded - original_size)/2);
     end
 
 	has_imag = norm(imag(x(:)))>0;
 
-	for d = 1:length(Npad)
+	for d = 1:length(size_paded)
 		Norig = size(x,d);
 
 		if strcmp(boundary,'symm')
@@ -76,16 +76,16 @@ function y = pad_signal(x, Npad, boundary, center)
 		end
 
 		if ~strcmp(boundary,'zero')
-			ind = zeros(1,Npad(d));
-			conjugate = zeros(1,Npad(d));
+			ind = zeros(1,size_paded(d));
+			conjugate = zeros(1,size_paded(d));
 			ind(1:Norig) = 1:Norig;
 			conjugate(1:Norig) = zeros(1,Norig);
-			src = mod([Norig+1:Norig+floor((Npad(d)-Norig)/2)]-1,length(ind0))+1;
-			dst = Norig+1:Norig+floor((Npad(d)-Norig)/2);
+			src = mod([Norig+1:Norig+floor((size_paded(d)-Norig)/2)]-1,length(ind0))+1;
+			dst = Norig+1:Norig+floor((size_paded(d)-Norig)/2);
 			ind(dst) = ind0(src);
 			conjugate(dst) = conjugate0(src);
-			src = mod(length(ind0)-[1:ceil((Npad(d)-Norig)/2)],length(ind0))+1;
-			dst = Npad(d):-1:Norig+floor((Npad(d)-Norig)/2)+1;
+			src = mod(length(ind0)-[1:ceil((size_paded(d)-Norig)/2)],length(ind0))+1;
+			dst = size_paded(d):-1:Norig+floor((size_paded(d)-Norig)/2)+1;
 			ind(dst) = ind0(src);
 			conjugate(dst) = conjugate0(src);
 		else
@@ -99,7 +99,7 @@ function y = pad_signal(x, Npad, boundary, center)
 				x = x-2*i*bsxfun(@times,conjugate.',imag(x));
 			end
 			if strcmp(boundary,'zero')
-				x(Norig+1:Npad(d),:,:) = 0;
+				x(Norig+1:size_paded(d),:,:) = 0;
 			end
 		elseif d == 2
 			x = x(:,ind,:);
@@ -107,7 +107,7 @@ function y = pad_signal(x, Npad, boundary, center)
 				x = x-2*i*bsxfun(@times,conjugate,imag(x));
 			end
 			if strcmp(boundary,'zero')
-				x(:,Norig+1:Npad(d),:) = 0;
+				x(:,Norig+1:size_paded(d),:) = 0;
 			end
 		end
 	end
