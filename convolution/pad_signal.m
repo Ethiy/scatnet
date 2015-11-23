@@ -49,7 +49,7 @@ function y = pad_signal( x, size_paded, boundary, center)
     original_size = size(x);
     original_size = original_size( 1:length(size_paded) ); % take the right dimensions
     
-	if any(original_size' > size_paded)
+	if any(original_size > size_paded)
 		error('Original size must be smaller than padding size');
 	end
 

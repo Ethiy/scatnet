@@ -28,14 +28,16 @@ function [U_phi, U_psi] = wavelet_layer_2d(U, filters, options)
     % with psi if the user does get U_psi
     calculate_psi = (nargout >= 2); 
     
+    %% Options
     if ~isfield(U.meta,'theta')
         U.meta.theta = zeros(0,size(U.meta.j,2));
     end
     
     if ~isfield(U.meta, 'resolution'),
-        U.meta.resolution = 0;
+        U.meta.resolution = options.resolution ;
     end
     
+    %% Scattering
     q = 1;
     for p = 1:numel( U.signal )
         x = U.signal{p};
@@ -45,28 +47,25 @@ function [U_phi, U_psi] = wavelet_layer_2d(U, filters, options)
             j = -1E20;
         end
         
-        % compute mask for progressive paths
+        %% Compute mask for progressive paths
         options.psi_mask = calculate_psi & ( filters.psi.meta.j >= j + filters.meta.Q );
+                                                              % ^ lambda_(j+1) >= lambda_(j)
         
-        % set resolution of signal
-        options.x_resolution = U.meta.resolution(p);
         
-        % compute wavelet transform
+        %% Compute wavelet transform
         [x_phi, x_psi, meta_phi, meta_psi] = wavelet_2d(x, filters, options);
         
-        % copy signal and meta for phi
+        %% Copy signal and meta for phi
         U_phi.signal{p} = x_phi;
         U_phi.meta.j(:,p) = [U.meta.j(:,p); filters.phi.meta.J];
         U_phi.meta.theta(:,p) = U.meta.theta(:,p);
         U_phi.meta.resolution(1,p) = meta_phi.resolution;
         
-        % copy signal and meta for psi
+        %% Copy signal and meta for psi
         for p_psi = find(options.psi_mask)
             U_psi.signal{q} = x_psi{p_psi};
-            U_psi.meta.j(:,q) = [U.meta.j(:,p);...
-                filters.psi.meta.j(p_psi)];
-            U_psi.meta.theta(:,q) = [U.meta.theta(:,p);...
-                filters.psi.meta.theta(p_psi)];
+            U_psi.meta.j(:,q) = [U.meta.j(:,p) ; filters.psi.meta.j(p_psi)];
+            U_psi.meta.theta(:,q) = [U.meta.theta(:,p) ; filters.psi.meta.theta(p_psi)];
             U_psi.meta.resolution(1,q) = meta_psi.resolution(p_psi);
             q = q +1;
         end

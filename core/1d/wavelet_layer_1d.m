@@ -46,16 +46,15 @@ function [U_phi, U_psi] = wavelet_layer_1d(U, filters, scat_opt, wavelet)
 	end
 	
 	scat_opt = fill_struct(scat_opt, 'path_margin', 0);
-    
-	%% Number of outputs
-    % do not compute any convolution
-    % with psi if the user does get U_psi
-	calc_U = (nargout>=2);
 
 	[ psi_xi , ~ , ~ ] = filter_freq( filters.meta );
 	
-	if ~isfield(U.meta, 'bandwidth'), U.meta.bandwidth = 2*pi; end
-	if ~isfield(U.meta, 'resolution'), U.meta.resolution = 0; end
+    if ~isfield(U.meta, 'bandwidth')
+        U.meta.bandwidth = 2*pi;
+    end
+    if ~isfield(U.meta, 'resolution')
+        U.meta.resolution = 0;
+    end
 	
 	U_phi.signal = {};
 	U_phi.meta.bandwidth = [];
@@ -66,28 +65,33 @@ function [U_phi, U_psi] = wavelet_layer_1d(U, filters, scat_opt, wavelet)
 	U_psi.meta.bandwidth = [];
 	U_psi.meta.resolution = [];
 	U_psi.meta.j = zeros(size(U.meta.j,1)+1,0);
+    
+    %% Number of outputs
+    % do not compute any convolution
+    % with psi if the user does get U_psi
+	calc_U = (nargout>=2);
 	
+    %% Scattering layer : convolving with psi and phi
 	r = 1;
-	for p1 = 1:length(U.signal)
-		current_bw = U.meta.bandwidth(p1)*2^scat_opt.path_margin;
-		psi_mask = calc_U&(current_bw>psi_xi);
+	for p = 1:length( U.signal ) % for every signal
+		current_bandwidth = U.meta.bandwidth( p ) * 2^scat_opt.path_margin;
+		psi_mask = calc_U & (current_bandwidth > psi_xi); % if not true it will not convolve
 		
-		scat_opt.x_resolution = U.meta.resolution(p1);
+		scat_opt.x_resolution = U.meta.resolution( p );
 		scat_opt.psi_mask = psi_mask;
-		[x_phi, x_psi, meta_phi, meta_psi] = ...
-			wavelet(U.signal{p1}, filters, scat_opt);
+		[x_phi, x_psi, meta_phi, meta_psi] = wavelet( U.signal{p} , filters, scat_opt);
 		
-		U_phi.signal{1,p1} = x_phi;
-		U_phi.meta = map_meta(U.meta,p1,U_phi.meta,p1);
-		U_phi.meta.bandwidth(1,p1) = meta_phi.bandwidth;
-		U_phi.meta.resolution(1,p1) = meta_phi.resolution;
+		U_phi.signal{1,p} = x_phi;
+		U_phi.meta = map_meta(U.meta,p,U_phi.meta,p);
+		U_phi.meta.bandwidth(1,p) = meta_phi.bandwidth;
+		U_phi.meta.resolution(1,p) = meta_phi.resolution;
 		
 		ind = r:r+sum(psi_mask)-1;
 		U_psi.signal(1,ind) = x_psi(1,psi_mask);
-		U_psi.meta = map_meta(U.meta,p1,U_psi.meta,ind,{'j'});
+		U_psi.meta = map_meta(U.meta,p,U_psi.meta,ind,{'j'});
 		U_psi.meta.bandwidth(1,ind) = meta_psi.bandwidth(1,psi_mask);
 		U_psi.meta.resolution(1,ind) = meta_psi.resolution(1,psi_mask);
-		U_psi.meta.j(:,ind) = [U.meta.j(:,p1)*ones(1,length(ind)); ...
+		U_psi.meta.j(:,ind) = [U.meta.j(:,p)*ones(1,length(ind)); ...
 			meta_psi.j(1,psi_mask)];
 			
 		r = r+length(ind);

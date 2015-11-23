@@ -59,7 +59,7 @@ function [ Wop, filters, filters_rot ] = wavelet_factory_3d(size_in, filt_opt, f
     Wop = cell( 1 , M + 1 );
     
 	%% First wavelet transform is a usual wavelet transform
-	Wop{1} = @(x)(wavelet_layer_2d(x, filters, wav_opt));
+    Wop{1} = @(x)(wavelet_layer_2d(x, filters, wav_opt));
 	
 	%% The rest of roto-translation wavelet transforms
 	for m = 2:M+1

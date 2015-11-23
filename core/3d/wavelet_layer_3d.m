@@ -32,12 +32,12 @@ function [U_Phi, U_Psi] = wavelet_layer_3d(U, filters, filters_rot, options)
     %% Rotation orbits
 	% if previous layers contains 2d signal, we must first
 	% extract the rotation orbits
-	previous_layer_2d = numel(size(U.signal{1})) == 2;
+	previous_layer_2d = (numel(size(U.signal{1})) == 2);
 	if (previous_layer_2d)
-		Uorb = {};
+		Uorb = {}; % rotation orbits
 		p_orb = 1;
 		for j = 0:max(U.meta.j)
-			orbit = U.meta.j == j;
+			orbit = (U.meta.j == j);
 			y = { U.signal{orbit} };
 			y = reshape(cell2mat(y),[size(y{1},1),size(y{1},2),numel(y)]);
 			Uorb.signal{p_orb} = y;
@@ -49,16 +49,16 @@ function [U_Phi, U_Psi] = wavelet_layer_3d(U, filters, filters_rot, options)
 		U = Uorb;
 	end
 	
-	% for all signal of U, apply roto-translation wavelet transform
+	%% For all signal of U, apply roto-translation wavelet transform
 	p2 = 1;
 	for p = 1:numel(U.signal)
 		y = U.signal{p};
 		j = U.meta.j(end,p);
 		
-		% compute mask for progressive paths
-		options.psi_mask = calculate_psi & ...
-			(filters.psi.meta.j >= j + filters.meta.Q);
-		options.x_resolution = U.meta.resolution(p);
+		%% Compute mask for progressive paths
+		options.psi_mask = calculate_psi & (filters.psi.meta.j >= j + filters.meta.Q);
+                                                              % ^ lambda_(j+1) >= lambda_(j)
+		U.meta.resolution(p) = options.resolution ;
 		if (calculate_psi)
 			% compute wavelet transform
 			[y_Phi, y_Psi, ~ , meta_Psi] = wavelet_3d(y, filters, filters_rot, options);
@@ -77,7 +77,7 @@ function [U_Phi, U_Psi] = wavelet_layer_3d(U, filters, filters_rot, options)
 		end
 		
 		if (calculate_psi)
-			% copy signal and meta for psi
+			%% Copy signal and meta for psi
 			for p_psi = 1:numel(y_Psi)
 				U_Psi.signal{p2} = y_Psi{p_psi};
 				U_Psi.meta.j(:,p2) = [U.meta.j(:,p);...
