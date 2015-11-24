@@ -23,8 +23,7 @@
 % See also
 %    CREATE_SRC, NEXT_FOLD
 
-function [train_set,test_set,valid_set] = create_partition(obj_class, ...
-	ratio,shuffle)
+function [train_set,test_set,valid_set] = create_partition(object_classes, ratio , shuffle)
 	
 	if nargin < 1
 		error('Must specify a source or a list of object classes!');
@@ -38,9 +37,9 @@ function [train_set,test_set,valid_set] = create_partition(obj_class, ...
 		shuffle = 1;
 	end
 
-	if isstruct(obj_class)
-		src = obj_class;
-		obj_class = [src.objects.class];
+	if isstruct(object_classes)
+		src = object_classes;
+		object_classes = [src.objects.class];
 	end
 	
 	if length(ratio) == 1
@@ -49,34 +48,43 @@ function [train_set,test_set,valid_set] = create_partition(obj_class, ...
 	
 	if length(ratio) == 2
 		ratio = [ratio 0];
+                    %  ^ is for the validation set 
 	end
 	
-	if abs(sum(ratio)-1) > eps
-		error('Ratios must add up to 1!');
-	end
+    if abs( sum(ratio)-1 ) > eps
+        error('Ratios must add up to 1!');
+    end
 	
-	train_set = [];
-	test_set = [];
-	valid_set = [];
+    number_classes = max( object_classes );
+	train_cell = cell( 1 , number_classes ) ;
+	test_cell = cell( 1 , number_classes );
+	valid_cell = cell( 1 , number_classes );
 	
-	for k = 1:max(obj_class)
-		ind = find(obj_class==k);
+	for class = 1:max( object_classes )
+        %% For every class,
+		ind = find( object_classes == class);
 		
-		if shuffle
-			ind = ind(randperm(length(ind)));
-		end
-
-		n_train = round(ratio(1)*length(ind));
+        %% Shuffle
+        if shuffle
+            ind = ind( randperm(length(ind)) ); 
+        end
+        
+        %% Partition
+		train_number = round( ratio(1)*length(ind) );
 		if ratio(3) == 0
-			n_test = length(ind)-n_train;
-			n_dev = 0;
+			test_number = length( ind )-train_number;
+			validation_number = 0;
 		else
-			n_test = round(ratio(2)*length(ind));
-			n_dev = length(ind)-n_train-n_test;
+			test_number = round(ratio(2)*length(ind));
+			validation_number = length(ind)-train_number-test_number;
 		end
 		
-		train_set = [train_set ind(1:n_train)];
-		test_set = [test_set ind(n_train+1:n_train+n_test)];
-		valid_set = [valid_set ind(n_train+n_test+1:n_train+n_test+n_dev)];
-	end
+		train_cell{ class } = ind( 1:train_number );
+		test_cell{ class } = ind(train_number+1:train_number+test_number);
+		valid_cell{ class } = ind(train_number+test_number+1:train_number+test_number+validation_number);
+    end
+    train_set = cell2mat( train_cell );
+    test_set = cell2mat( test_cell );
+    valid_set = cell2mat( valid_cell );
+
 end
