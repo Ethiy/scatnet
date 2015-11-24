@@ -33,7 +33,7 @@ function [U_phi, U_psi] = wavelet_layer_2d(U, filters, options)
         U.meta.theta = zeros(0,size(U.meta.j,2));
     end
     
-    if ~isfield(U.meta, 'resolution'),
+    if ~isfield(U.meta, 'resolution')
         U.meta.resolution = options.resolution ;
     end
     

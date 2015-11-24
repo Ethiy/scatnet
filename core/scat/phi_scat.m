@@ -40,7 +40,7 @@
 
 function S = phi_scat(U, Wop)
 	% Apply scattering, order per order
-    
+    S = cell( 1 , numel(U));
 	for m = 1:numel(U)
 			S{m} = Wop{m}(U{m});
 	end

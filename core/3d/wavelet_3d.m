@@ -154,8 +154,7 @@ function [y_Phi, y_Psi, meta_Phi, meta_Psi] = wavelet_3d(y, filters, filters_rot
         end
         for k2 = 0:numel(filters_rot.psi.filter)-1
             psi_angle = filters_rot.psi.filter{k2+1};
-            y_Psi{p} = ...
-                sub_conv_1d_along_third_dim_simple(y_phi_f, psi_angle, 0);
+            y_Psi{p} = sub_conv_1d_along_third_dim_simple(y_phi_f, psi_angle, 0);
             meta_Psi.theta2(p) = 0;
             meta_Psi.j2(p) = filters.phi.meta.J;
             meta_Psi.k2(p) = k2;
@@ -202,8 +201,7 @@ function [y_Phi, y_Psi, meta_Phi, meta_Psi] = wavelet_3d(y, filters, filters_rot
             % low pass angle to obtain
             % ------- PSI(U,V) * PHI(THETA) -------
             phi_angle = filters_rot.phi.filter;
-            y_Psi{p} = ...
-                sub_conv_1d_along_third_dim_simple(y_psi_f, phi_angle, 0);
+            y_Psi{p} = sub_conv_1d_along_third_dim_simple(y_psi_f, phi_angle, 0);
             meta_Psi.j2(p) = j2;
             meta_Psi.theta2(p) = theta2;
             meta_Psi.k2(p) = -1;

@@ -28,20 +28,21 @@
 function [Wop, filters] = wavelet_factory_2d(size_in, filt_opt, scat_opt)
     %% Check options white list
     if(nargin<3)
-        scat_opt=struct;
+        scat_opt=struct();
     end
     
     if(nargin<2)
-        filt_opt=struct;
+        filt_opt=struct();
     end
     
     white_list_filt = {'filter_type', 'precision', 'Q', 'J', 'L',...
         'sigma_phi','sigma_psi','xi_psi','slant_psi', 'min_margin'};
-    white_list_scat = { 'oversampling', 'precision','M'};
+    white_list_scat = { 'oversampling', 'precision', 'resolution' , 'M'};
     
     check_options_white_list(filt_opt, white_list_filt);
     check_options_white_list(scat_opt, white_list_scat);
-	
+    scat_opt = fill_struct(scat_opt, 'resolution', 0);
+
 	%% Create filters
     filt_opt = fill_struct(filt_opt, 'filter_type', 'morlet');
     

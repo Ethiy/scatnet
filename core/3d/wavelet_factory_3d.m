@@ -40,6 +40,10 @@ function [ Wop, filters, filters_rot ] = wavelet_factory_3d(size_in, filt_opt, f
         filt_opt = struct();
     end
 	
+    white_list_scat = { 'oversampling', 'precision', 'resolution' , 'M'};
+    check_options_white_list(scat_opt, white_list_scat);
+    scat_opt = fill_struct(scat_opt, 'resolution', 0);
+
 	%% Filters along spatial variable
 	filters = morlet_filter_bank_2d(size_in, filt_opt);
 	
