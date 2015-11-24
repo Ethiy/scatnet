@@ -13,6 +13,8 @@
 %       the meta fields are filled with  -1's where necessary.
 
 function Y = flatten_scat(X)
+
+    %% Initialisation
 	Y.signal = {};
 	Y.meta = struct();
 	
@@ -20,7 +22,7 @@ function Y = flatten_scat(X)
 	
 	meta_fields = fieldnames(X{end}.meta);
 	
-	
+	%% Flattening
 	r = 1;
 	for m = 0:length(X)-1
 		ind = r:r+length(X{m+1}.signal)-1;

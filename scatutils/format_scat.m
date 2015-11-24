@@ -8,7 +8,7 @@
 % Input
 %    S (cell): The scattering representation to be formatted.
 %    fmt (string): The desired format. Can be either 'raw',
-%     'order_table' or 'table' (default 'table').
+%     'order_table', 'vector' or 'table' (default 'table').
 %
 % Output
 %    out: The scattering representation in the desired format (see below).
@@ -30,58 +30,94 @@
 %          bandwidth. The meta variable is one meta structure formed by con-
 %          catenating the meta structure of each order and filling out with
 %          -1 where necessary (the j field, for example).
+%       'vector': transforms the 'table' output into a matrix for images
 %
 % See also
 %   FLATTEN_SCAT, REORDER_SCAT
 
 function [out,meta] = format_scat(X,fmt)
-	if nargin < 2
-		fmt = 'table';
-	end
+    if nargin < 2
+        fmt = 'table';
+    end
+    
+    switch fmt
+        case 'raw'
+            out = X;
+            meta = [];
+            return
+            
+        case 'table'
+            non_empties = cellfun(@(x) ~isempty(x.signal),X);
+            resolution = cellfun(@(x) length(x.signal{1}),X(non_empties));
+            % if not all nonzero resolutions are equal, an error is thrown
+            if ~all(nonzeros(resolution)==resolution(1))
+                error(['To use ''table'' output format, all orders ' ...
+                    'must be of the same resolution. Consider' ...
+                    'using the ''order_table'' output format.']);
+            end
+            X = flatten_scat(X); % puts all layers together
+            if ~isempty(X{1}.signal)
+                out = zeros( ...
+                [length(X{1}.signal) size(X{1}.signal{1})], ...
+                'like' , X{1}.signal{1} );
 
-	if strcmp(fmt,'raw')
-		out = X;
-		meta = [];
-		return;
-	end
+                for j = 0:length(X{1}.signal)-1
+                    out(1+j,1:numel(X{1}.signal{1})) = ...
+                    X{1}.signal{1+j}(:);
+                end
+            end
+            meta = X{1}.meta;
+            return
+                
+        case 'order_table'
+            M = length(X); % M equals 1 if X has been flattened
+            out = cell(1,M);
+            meta = cell(1,M);
 
-	if strcmp(fmt,'table')
-		non_empties = cellfun(@(x) ~isempty(x.signal),X);
-		resolution = cellfun(@(x) length(x.signal{1}),X(non_empties));
-		% if not all nonzero resolutions are equal, an error is thrown
-		if ~all(nonzeros(resolution)==resolution(1))
-			error(['To use ''table'' output format, all orders ' ...
-			'must be of the same resolution. Consider' ...
-			'using the ''order_table'' output format.']);
-		end
-		X = flatten_scat(X); % puts all layers together
-	elseif ~strcmp(fmt,'order_table')
-		error(['Unknown format. Available formats are ''raw'', ''table'''...
-		' or ''order_table''.']);
-	end
+            for m = 0:M-1
+                if isempty(X{1+m}.signal)
+                    out{1+m} = [];
+                else
+                    out{1+m} = zeros( ...
+                    [length(X{1+m}.signal) size(X{1+m}.signal{1})], ...
+                    'like' , X{1+m}.signal{1} );
 
-	M = length(X); % M equals 1 if X has been flattened
-	out = cell(1,M);
-	meta = cell(1,M);
+                    for j = 0:length(X{1+m}.signal)-1
+                        out{1+m}(1+j,1:numel(X{1+m}.signal{1})) = ...
+                        X{1+m}.signal{1+j}(:);
+                    end
+                end
+                meta{m+1} = X{m+1}.meta;
+            end
+            return
+        case 'vector'
+            
+            non_empties = cellfun(@(x) ~isempty(x.signal),X);
+            resolution = cellfun(@(x) length(x.signal{1}),X(non_empties));
+            % if not all nonzero resolutions are equal, an error is thrown
+            if ~all(nonzeros(resolution)==resolution(1))
+                error(['To use ''table'' output format, all orders ' ...
+                    'must be of the same resolution. Consider' ...
+                    'using the ''order_table'' output format.']);
+            end
+            
+            X = flatten_scat(X); % puts all layers together
+            if ~isempty(X{1}.signal)
+                out = zeros( ...
+                [length(X{1}.signal) numel(X{1}.signal{1})], ...
+                'like' , X{1}.signal{1} );
 
-	for m = 0:M-1
-		if isempty(X{1+m}.signal)
-			out{1+m} = [];
-		else
-			out{1+m} = zeros( ...
-			[length(X{1+m}.signal) size(X{1+m}.signal{1})], ...
-			class(X{1+m}.signal{1}));
-
-			for j1 = 0:length(X{1+m}.signal)-1
-				out{1+m}(1+j1,1:numel(X{1+m}.signal{1})) = ...
-				X{1+m}.signal{1+j1}(:);
-			end
-		end
-		meta{m+1} = X{m+1}.meta;
-	end
-
-	if strcmp(fmt,'table')
-		out = out{1};
-		meta = meta{1};
-	end
+                for j = 0:length(X{1}.signal)-1
+                    out(1+j,: ) = ...
+                    X{1}.signal{1+j}(:);
+                end
+            end
+            meta = X{1}.meta;
+            return
+            
+        otherwise
+            error(['Unknown format. Available formats are ''raw'', ''table'''...
+            ' or ''order_table''.']);
+    end
+    
 end
