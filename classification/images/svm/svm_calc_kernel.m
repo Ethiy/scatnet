@@ -24,9 +24,9 @@
 %    SVM_TRAIN
 
 function db = svm_calc_kernel(db, kernel_type, kernel_format, kernel_set)
-	% Set default options.
+	%% Set default options.
 	if nargin < 4
-		kernel_set = 1:size(db.features,2);
+		kernel_set = 1:size(db.features,1);
 	end
 
 	if nargin < 3
@@ -40,26 +40,26 @@ function db = svm_calc_kernel(db, kernel_type, kernel_format, kernel_set)
 	% To reduce memory requirements, the kernel is computed in blocks of fixed
 	% size. A smaller value for block_size gives less memory usage, but at a 
 	% potential increase in computational speed.
-	block_size = 8192;
+	block_size = 2^13 ;
 
-	vector_ct = length(kernel_set);
+	vector_ct = length( kernel_set );
 	
 	if strcmp(kernel_format,'square')
 		% K is a matrix of size vector_ct+1 rows and vector_ct columns, with the
 		% first row containing the index of the vector and the remaining rows
 		% containing the kernel values.
-		K = zeros(vector_ct+1,vector_ct,class(db.features));
+		K = zeros( vector_ct + 1 , vector_ct , 'like' , db.features );
 	else
 		% K is a packed version of the 'square' kernel described above, taking advan-
 		% tage of the symmetry in the kernel value section of the matrix, excluding
 		% the vector indices row. The matrix is stored in column-major form.
-		K = zeros(vector_ct*(vector_ct+3)/2,1,class(db.features));
+		K = zeros( vector_ct*(vector_ct+3)/2 , 1 , 'like' , db.features );
 	end
 	
 	if strcmp(kernel_type,'gaussian')
 		% If we're calculating a Gaussian kernel, we can save time by precalculating
 		% all the square norms.
-		norm1 = sum(abs(db.features(:,kernel_set)).^2,1);
+		norm1 = sum( abs( db.features( kernel_set , : ) ).^2 , 1 );
 	end
 	
 	r = 1;
@@ -68,31 +68,31 @@ function db = svm_calc_kernel(db, kernel_type, kernel_format, kernel_set)
 		% tors to yield a sub-matrix of size vector_ct rows and block_size columns.
 		% Note that since MATLAB stores matrices in column-major format, it is faster
 		% to fill up the matrix this way.
-		ind = r:min(r+block_size-1,vector_ct);
+		index = r:min( r + block_size - 1 , vector_ct );
 		
-		% Calculate the whole sub-kernel before worrying about storage.
-		if strcmp(kernel_type,'linear')
+		%% Calculate the whole sub-kernel before worrying about storage.
+		if strcmp( kernel_type , 'linear' )
 			% Linear kernel - just calculate the scalar products.
-			Kr = db.features(:,kernel_set).'*db.features(:,kernel_set(ind));
-		elseif strcmp(kernel_type,'gaussian')
+			Kr = db.features( kernel_set , : ).' * db.features( kernel_set(index) , : );
+		elseif strcmp( kernel_type , 'gaussian' )
 			% Gaussian kernel - calculate the scalar products, multiply by -2 and add
 			% the square norms.
-			Kr = -2*db.features(:,kernel_set).'*db.features(:,kernel_set(ind));
+			Kr = -2 * db.features( kernel_set , : ).' * db.features( kernel_set(index) , : );
 			Kr = bsxfun(@plus,norm1.',Kr);
-			Kr = bsxfun(@plus,norm1(ind),Kr);
+			Kr = bsxfun(@plus,norm1(index),Kr);
 		end
 
-		if strcmp(kernel_format,'square')
+		if strcmp( kernel_format , 'square' )
 			% Square kernel - just store it in the appropriate columns.
-			K(2:end,ind) = Kr;
-		elseif strcmp(kernel_format,'triangle')
-			for k = 1:length(ind)
+			K( 2:end , index ) = Kr;
+		elseif strcmp( kernel_format , 'triangle' )
+			for k = 1:length(index)
 				% For each of the column vectors, store part of it in the triangle.
 				% The packing scheme specifies that the (r,c)th element, for r >= 0,
 				% c >= 0 and r <= c+1, is found at index c*(c+3)/2+r.
 
 				% To avoid rounding errors...
-				ind_k = int64(ind(k));
+				ind_k = int64(index(k));
 				
 				% Store vector index.
 				K((ind_k-1)*(ind_k-1+3)/2+1) = ind_k;
@@ -103,11 +103,11 @@ function db = svm_calc_kernel(db, kernel_type, kernel_format, kernel_set)
 				K(rng) = Kr(1:int32(ind_k),k);
 			end
 		end	
-		r = r+length(ind);
+		r = r+length(index);
 	end
 
-	% NOTE: This must be done after to avoid initializing K too early...
-	if strcmp(kernel_format,'square')
+	%% NOTE: This must be done after to avoid initializing K too early...
+	if strcmp( kernel_format , 'square' )
 		% Fill in the vector indices.
 		K(1,:) = 1:vector_ct;
 	end
