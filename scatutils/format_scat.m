@@ -42,11 +42,13 @@ function [out,meta] = format_scat(X,fmt)
     
     switch fmt
         case 'raw'
+        %% Case : raw
             out = X;
             meta = [];
             return
             
         case 'table'
+        %% Case : table
             non_empties = cellfun(@(x) ~isempty(x.signal),X);
             resolution = cellfun(@(x) length(x.signal{1}),X(non_empties));
             % if not all nonzero resolutions are equal, an error is thrown
@@ -70,6 +72,7 @@ function [out,meta] = format_scat(X,fmt)
             return
                 
         case 'order_table'
+        %% Case : order table
             M = length(X); % M equals 1 if X has been flattened
             out = cell(1,M);
             meta = cell(1,M);
@@ -91,7 +94,7 @@ function [out,meta] = format_scat(X,fmt)
             end
             return
         case 'vector'
-            
+        %% Case : vector           
             non_empties = cellfun(@(x) ~isempty(x.signal),X);
             resolution = cellfun(@(x) length(x.signal{1}),X(non_empties));
             % if not all nonzero resolutions are equal, an error is thrown
@@ -103,19 +106,21 @@ function [out,meta] = format_scat(X,fmt)
             
             X = flatten_scat(X); % puts all layers together
             if ~isempty(X{1}.signal)
-                out = zeros( ...
-                [length(X{1}.signal) numel(X{1}.signal{1})], ...
+                out = zeros( 1 , length(X{1}.signal) * numel(X{1}.signal{1}), ...
                 'like' , X{1}.signal{1} );
-
+                
+                r = 1;
                 for j = 0:length(X{1}.signal)-1
-                    out(1+j,: ) = ...
-                    X{1}.signal{1+j}(:);
+                    index = r:r +  numel( X{1}.signal{1+j} ) - 1;
+                    out( index ) = X{1}.signal{1+j}(:);
+                    r = r + numel( X{1}.signal{1+j} );
                 end
             end
             meta = X{1}.meta;
             return
             
         otherwise
+        %% Case : non identified
             error(['Unknown format. Available formats are ''raw'', ''table'''...
             ' or ''order_table''.']);
     end
