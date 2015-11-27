@@ -59,7 +59,7 @@ function db = svm_calc_kernel(db, kernel_type, kernel_format, kernel_set)
 	if strcmp(kernel_type,'gaussian')
 		% If we're calculating a Gaussian kernel, we can save time by precalculating
 		% all the square norms.
-		norm1 = sum( abs( db.features( kernel_set , : ) ).^2 , 1 );
+		norm1 = sum( abs( db.features( kernel_set , : ) ).^2 , 2 );
 	end
 	
 	r = 1;
@@ -73,13 +73,13 @@ function db = svm_calc_kernel(db, kernel_type, kernel_format, kernel_set)
 		%% Calculate the whole sub-kernel before worrying about storage.
 		if strcmp( kernel_type , 'linear' )
 			% Linear kernel - just calculate the scalar products.
-			Kr = db.features( kernel_set , : ).' * db.features( kernel_set(index) , : );
+			Kr = db.features( kernel_set , : ) * db.features( kernel_set(index) , : ).' ;
 		elseif strcmp( kernel_type , 'gaussian' )
 			% Gaussian kernel - calculate the scalar products, multiply by -2 and add
 			% the square norms.
-			Kr = -2 * db.features( kernel_set , : ).' * db.features( kernel_set(index) , : );
-			Kr = bsxfun(@plus,norm1.',Kr);
-			Kr = bsxfun(@plus,norm1(index),Kr);
+			Kr = -2 * db.features( kernel_set , : ) * db.features( kernel_set(index) , : ).';
+			Kr = bsxfun( @plus , norm1 , Kr );
+			Kr = bsxfun( @plus , norm1(index) , Kr );
 		end
 
 		if strcmp( kernel_format , 'square' )

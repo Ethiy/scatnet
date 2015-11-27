@@ -33,11 +33,11 @@ function [err,C,gamma] = svm_param_search(db,train_set,valid_set,opt)
 
 
 	if isempty(valid_set)	
-		obj_class = [db.src.objects(train_set).class];
+		classes = [ db.src.objects(train_set).class ];
 		
 		ratio = (opt.cv_folds-1)/opt.cv_folds;
 		
-		[cvtrain_set,cvvalid_set] = create_partition(obj_class,ratio,0);
+		[cvtrain_set , cvvalid_set] = create_partition(classes,ratio,0);
 		cvtrain_set = cvtrain_set;
 		cvvalid_set = cvvalid_set;
 		
@@ -51,10 +51,9 @@ function [err,C,gamma] = svm_param_search(db,train_set,valid_set,opt)
 				train_set(cvtrain_set),train_set(cvvalid_set),opt);
 			
 			[cvtrain_set,cvvalid_set] = ...
-				next_fold(obj_class,cvtrain_set,cvvalid_set);
+				next_fold(classes,cvtrain_set,cvvalid_set);
 		end
 	else
-		r = 1;
 		[C,gamma] = ndgrid(opt.C,opt.gamma);
 		C = C(:);
 		gamma = gamma(:);
