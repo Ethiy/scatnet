@@ -35,19 +35,19 @@ function db = prepare_database( src , feature_fun , opt )
         % parfor loop - note that the contents are the same as the serial loop, but
         % MATLAB doesn't seem to offer an easy way of deduplicating the code.
 
-        %Slice variables for parfor
+        % Slice variables for parfor
         objects = src.objects( : );
         normalize = opt.file_normalize;
         sampling = opt.feature_sampling;
 
-        % Loop through all the files in the source
+        %% Loop through all the files in the source
 
         parfor iterator = 1:length( src.objects )
             tic
-            % Load the complete file and normalize as needed.
+            %% Load the complete file and normalize as needed.
             x = double( objects( iterator ).image );
 
-            % Normalize
+            %% Normalize
             if ~isempty( normalize )
                 switch normalize
                     case 1
@@ -61,25 +61,23 @@ function db = prepare_database( src , feature_fun , opt )
                 end
              end
 
-            % Apply all the feature functions to the objects contained in x. The output
-            % buf is a PxNxN vector, where P corresponds to the number of 
-            % and NxN corresponds to the number of features per .
+            %% Apply all the feature functions to the objects contained in x. 
 
             buf = feature_fun( x );
 
             % Subsample among the features as needed.
-            features = [ features ; buf( : , 1:sampling:end , 1:sampling:end )];
+            features = [ features ; buf( : , 1:sampling:end )];
 
             fprintf('.');
         end
     else
-        time_start = clock;
+        fprintf('[] 00%%');
         for iterator = 1:length( src.objects )
-            tic
-            % Load the complete file and normalize as needed.
+            
+            %% Load the complete file and normalize as needed.
             x = double( src.objects( iterator ).image );
 
-            % Normalize
+            %% Normalize
 
             if ~isempty( opt.file_normalize )
                 switch opt.file_normalize
@@ -94,20 +92,14 @@ function db = prepare_database( src , feature_fun , opt )
                 end
             end
 
-            % Apply all the feature functions to the objects contained in x. The output
-            % buf is a PxNxN vector, where P corresponds to the number of 
-            % and NxN corresponds to the number of features per .
+            %% Apply all the feature functions to the objects contained in x.
 
             buf = feature_fun( x );
 
-            % Subsample among the features as needed.
-            features = [ features ; buf( : , 1:opt.feature_sampling:end , 1:opt.feature_sampling:end )];
-
-            time_elapsed = etime(clock, time_start);
-            estimated_time_left = time_elapsed * (length(src.files)- iterator ) / iterator ;
+            %% Subsample among the features as needed.
+            features = [ features ; buf( : , 1:opt.feature_sampling:end  )];
             
-%             fprintf('Estimated time left : %d \n' , estimated_time_left);
-            fprintf('.');
+            fprintf('\b\b\b\b\b.] %2.0f%%' , iterator/length(src.objects ) * 100);
         end
         fprintf('\n');
     end
