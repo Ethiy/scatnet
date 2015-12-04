@@ -19,18 +19,16 @@
 %    AFFINE_TRAIN, AFFINE_PARAM_SEARCH
 
 function [labels,err,feature_err] = affine_test(db,model,test_set)
-	% Create mask for the testing vectors.
+	%% Create mask for the testing vectors.
 	test_mask = ismember(1:length(db.src.objects),test_set);
 	
-	% Get the indices of the testing vectors.
+	%% Get the indices of the testing vectors.
 	ind_obj = find(test_mask);
 	
-	% Determine the feature vector indices.
-	ind_feat = [db.indices{ind_obj}];
 	
-	% Classify the feature vectors separately.
-	[feature_labels,feature_err] = select_class(...
-		db.features(:,ind_feat),model.mu,model.v,model.dim);
+	%% Classify the feature vectors separately.
+	[~,feature_err] = select_class(...
+		db.features(:,ind_obj),model.mu,model.v,model.dim);
 	
 	% Prepare a matrix of average appproximation errors for each object (second
 	% dimension) with respect to each dimension of the approximating space (first
@@ -40,14 +38,11 @@ function [labels,err,feature_err] = affine_test(db,model,test_set)
 	labels = zeros(size(feature_err,1),length(ind_obj));
 		
 	for l = 1:length(ind_obj)
-		% For each object, determine the feature vectors it contains.
-		ind = find(ismember(ind_feat,db.indices{ind_obj(l)}));
+		%% Average the approximation error across feature vectors.
+		err(:,l,:) = mean(feature_err(:,l,:),2);
 		
-		% Average the approximation error across feature vectors.
-		err(:,l,:) = mean(feature_err(:,ind,:),2);
-		
-		% The label of the object is that of the class with the least error.
-		[temp,labels(:,l)] = min(err(:,l,:),[],3);
+		%% The label of the object is that of the class with the least error.
+		[~,labels(:,l)] = min(err(:,l,:),[],3);
 	end
 end
 
@@ -73,7 +68,7 @@ function [d,err] = select_class(t,mu,v,dim)
 	err = err(dim+1,:,:);
 	
 	% Calculate the class of each feature vector as the one minimizing error.
-	[temp,d] = min(err,[],3);
+	[~,d] = min(err,[],3);
 end
 
 function err = approx(s,mu,v)

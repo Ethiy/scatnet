@@ -25,7 +25,7 @@ function [err,dim] = affine_param_search(db,train_set,valid_set,opt)
 		opt = struct();
 	end
 	
-	opt = fill_struct(opt,'dim',0:160);
+	opt = fill_struct(opt,'dim', 2000:10000);
 	opt = fill_struct(opt,'cv_folds',5);
 	
 	if isempty(valid_set)
