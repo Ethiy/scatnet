@@ -67,7 +67,7 @@ function [u,s] = sig_pca(x,M)
 
 	if nargin > 1 && M > 0
 		%% If M is non-zero, calculate the first M principal components.
-	    [u,s,v] = svds(x-sig_mean(x)*ones(1,size(x,2)),M);
+	    [u,s,~] = svds(x-sig_mean(x)*ones(1,size(x,2)),M);
 	    s = abs(diag(s)/sqrt(size(x,2)-1)).^2;
 	else
 		%% Otherwise, calculate all the principal components.
