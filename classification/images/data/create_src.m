@@ -36,12 +36,12 @@ function src = create_src(directory,objects_fun)
 	classes = {};% set of the unique classes
 
     
-	for index = 1:length(files)
-        
-		[file_objects , file_classes] = objects_fun( files{index} );
-		
-		objects = [objects file_objects];
-		classes = [classes file_classes];
+    for index = 1:length(files)
+
+        [file_objects , file_classes] = objects_fun( files{index} );
+
+        objects = [objects file_objects];
+        classes = [classes file_classes];
     end
 
 	[classes,~,object_class] = unique(classes);

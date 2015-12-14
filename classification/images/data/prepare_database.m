@@ -101,7 +101,7 @@ function db = prepare_database( src , feature_fun , opt )
             
             fprintf('\b\b\b\b\b.] %2.0f%%' , iterator/length(src.objects ) * 100);
         end
-        fprintf('\n');
+        fprintf(' \n');
     end
 	
     db.src = src;
