@@ -21,13 +21,13 @@ function model = affine_train(db,train_set,opt)
 	end
 	
 	%% Set default options.
-	opt = fill_struct(opt,'dim',80);
+	opt = fill_struct( opt , 'dim' , 80 );
 	
 	%% Create mask to separate the training vectors
 	train_mask = ismember(1:length(db.src.objects),train_set);
 	
     mu = cell( 1 , length(db.src.classes) );
-    v = cell( 1 , length(db.src.classes) );
+    U = cell( 1 , length(db.src.classes) );
 	for class = 1:length(db.src.classes)
 		%% Determine the objects belonging to class.
 		ind_obj = find([db.src.objects.class]==class & train_mask);
@@ -38,12 +38,13 @@ function model = affine_train(db,train_set,opt)
         end
 
 		%% Calculate centroid and all the principal components.
-		mu{class} = sig_mean(db.features(:,ind_obj));
-		v{class} = sig_pca(db.features(:,ind_obj),0);
+		mu{class} = mean(db.features( ind_obj , : ));
+        X = db.features( ind_obj , : ) - ones( size(db.features( ind_obj , : ),1) , 1 ) * mu{class};
+		[U{class} , ~ ] = pca( X );
 
 		%% Truncate principal components if they exceed the maximum dimension.
-		if size(v{class},2) > max(opt.dim)
-			v{class} = v{class}(:,1:max(opt.dim));
+		if size(U{class},2) > max(opt.dim)
+			U{class} = U{class}(:,1:max(opt.dim));
 		end
 	end
 	
@@ -51,28 +52,21 @@ function model = affine_train(db,train_set,opt)
 	model.model_type = 'affine';
 	model.dim = opt.dim;
 	model.mu = mu;
-	model.v = v;
+	model.principal_components = U;
 end
 
-function mu = sig_mean(x)
-	%% Calculate mean along second dimension.
-
-    C = size(x,2);
+function mu = mean( X )
+	
+    N = size(X,1);
     
-    mu = x*ones(C,1)/C;
+    mu = ones( 1 , N ) * X/N;
 end
 
-function [u,s] = sig_pca(x,M)
+function [U,s] = pca( X )
 	%% Calculate the principal components of x along the second dimension.
-
-	if nargin > 1 && M > 0
-		%% If M is non-zero, calculate the first M principal components.
-	    [u,s,~] = svds(x-sig_mean(x)*ones(1,size(x,2)),M);
-	    s = abs(diag(s)/sqrt(size(x,2)-1)).^2;
-	else
-		%% Otherwise, calculate all the principal components.
-		[u,d] = eig(cov(x'));
-		[s,ind] = sort(diag(d),'descend');
-		u = u(:,ind);
-	end
+    
+    [ U , spectral_matrix ] = eig( X'*X );
+    [ s ,ind ] = sort( diag( spectral_matrix ),'descend' );
+    U = U(:,ind);
+	
 end

@@ -60,28 +60,28 @@ function [train_set,test_set,valid_set] = create_partition(object_classes, ratio
 	test_cell = cell( 1 , number_classes );
 	valid_cell = cell( 1 , number_classes );
 	
-	for class = 1:max( object_classes )
+    for class = 1:max( object_classes )
         %% For every class,
-		ind = find( object_classes == class);
-		
+        ind = find( object_classes == class);
+
         %% Shuffle
         if shuffle
             ind = ind( randperm(length(ind)) ); 
         end
-        
+
         %% Partition
-		train_number = round( ratio(1)*length(ind) );
-		if ratio(3) == 0
-			test_number = length( ind )-train_number;
-			validation_number = 0;
-		else
-			test_number = round(ratio(2)*length(ind));
-			validation_number = length(ind)-train_number-test_number;
-		end
-		
-		train_cell{ class } = ind( 1:train_number );
-		test_cell{ class } = ind(train_number+1:train_number+test_number);
-		valid_cell{ class } = ind(train_number+test_number+1:train_number+test_number+validation_number);
+        train_number = round( ratio(1)*length(ind) );
+        if ratio(3) == 0
+            test_number = length( ind )-train_number;
+            validation_number = 0;
+        else
+            test_number = round(ratio(2)*length(ind));
+            validation_number = length(ind)-train_number-test_number;
+        end
+
+        train_cell{ class } = ind( 1:train_number );
+        test_cell{ class } = ind(train_number+1:train_number+test_number);
+        valid_cell{ class } = ind(train_number+test_number+1:train_number+test_number+validation_number);
     end
     train_set = cell2mat( train_cell );
     test_set = cell2mat( test_cell );

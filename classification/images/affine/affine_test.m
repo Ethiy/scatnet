@@ -20,67 +20,68 @@
 
 function [labels,err,feature_err] = affine_test(db,model,test_set)
 	%% Create mask for the testing vectors.
-	test_mask = ismember(1:length(db.src.objects),test_set);
+	test_mask = ismember( 1:length( db.src.objects ) , test_set );
 	
 	%% Get the indices of the testing vectors.
-	ind_obj = find(test_mask);
+	ind_obj = find( test_mask );
 	
 	
 	%% Classify the feature vectors separately.
 	[~,feature_err] = select_class(...
-		db.features(:,ind_obj),model.mu,model.v,model.dim);
+		db.features( ind_obj , : ), model.mu , model.principal_components , model.dim );
 	
 	% Prepare a matrix of average appproximation errors for each object (second
 	% dimension) with respect to each dimension of the approximating space (first
 	% dimension) and class (third dimension)
 	err = zeros(...
-		[size(feature_err,1),length(ind_obj),size(feature_err,3)]);
-	labels = zeros(size(feature_err,1),length(ind_obj));
+		[ length(ind_obj) , size(feature_err,2) , size(feature_err,3) ] );
+	labels = zeros( length(ind_obj) , size(feature_err,2) );
 		
 	for l = 1:length(ind_obj)
 		%% Average the approximation error across feature vectors.
-		err(:,l,:) = mean(feature_err(:,l,:),2);
+		err(l,:,:) = mean(feature_err(l,:,:),1);
 		
 		%% The label of the object is that of the class with the least error.
-		[~,labels(:,l)] = min(err(:,l,:),[],3);
+		[~,labels(l,:)] = min(err(l,:,:),[],3);
 	end
 end
 
-function [d,err] = select_class(t,mu,v,dim)
-	L = length(dim);	% number of dimensions
-	D = length(mu);		% number of classes
-	P = size(t,2);		% number of feature vectors
+function [class,err] = select_class( features , mu , U , dim )
+	L = length(dim);	%#ok<NASGU> % number of dimensions
+	number_of_classes = length(mu);		% number of classes
+	number_of_vectors = size(features,1);		% number of feature vectors
 
-	% Prepare approximation error vector. First index is the dimension of the
+	%% Prepare approximation error vector. 
+    % First index is the dimension of the
 	% approximating affine space, second index that of the feature vectors
 	% and third index is that of the approximating class.
-	err = Inf*ones(max(dim)+1,P,D);
-	for d = 1:D
-		if isempty(mu{d})
-			% Class has no model, skip.
+	err = Inf * ones( number_of_vectors , max(dim)+1 , number_of_classes );
+	for class = 1:number_of_classes
+		if isempty( mu{class} )
+			%% Class has no model, skip.
 			continue;
 		end
-		% Store approximation errors for all feature vectors with class d.
-		err(1:size(v{d},2)+1,:,d) = approx(t,mu{d},v{d});
+		%% Store approximation errors for all feature vectors with class.
+		err( : , 1:size(U{class},2) + 1 , class ) = approx( features , mu{class} , U{class} );
 	end
 	
-	% Only store the approximating dimensions specified in dim.
-	err = err(dim+1,:,:);
+	%% Only store the approximating dimensions specified in dim.
+	err = err( : , dim+1 , : );
 	
-	% Calculate the class of each feature vector as the one minimizing error.
-	[~,d] = min(err,[],3);
+	%% Calculate the class of each feature vector as the one minimizing error.
+	[~,class] = min(err,[],3);
 end
 
-function err = approx(s,mu,v)
-	% Subtract the class centroid.
-	s = bsxfun(@minus,s,mu);
+function err = approx( s , mu , v )
+	%% Subtract the class centroid.
+	s = bsxfun( @minus, s , mu );
 	
-	% Prepare the error matrix.
-	err = zeros(size(v,2)+1,size(s,2));
+	%% Prepare the error matrix.
+	err = zeros( size(s,1) , size(v,2)+1 );
 
-	% Use Pythagoras to calculate the norm of the orthogonal projection at each
+	%% Use Pythagoras to calculate the norm of the orthogonal projection at each
 	% approximating dimension.
-	err(1,:) = sum(abs(s).^2,1);
-	err(2:end,:) = -abs(v'*s).^2;
-	err = sqrt(cumsum(err,1));
+	err( : , 1 ) = sum( abs(s).^2 , 2 );
+	err( : , 2:end ) = -abs(s * v).^2;
+	err = sqrt( cumsum( err , 2 ) );
 end
